@@ -63,14 +63,14 @@ Board Used:
 		#define SYSCTL_RCGC2_GPIOABF 0x23 // Enable clock on portA, portB and portF
 
 	//Global Variable Array
-unsigned char CC_7Seg_Display_Lookup_Table[10] = {0x3F, 0x06, 0x5B, 0x4F, 0X66, 0x6D, 0X7D, 0X07, 0X7F, 0X6F};
+unsigned char CC_7Seg_Display_Lookup_Table[10u] = {0x3F, 0x06, 0x5B, 0x4F, 0X66, 0x6D, 0X7D, 0X07, 0X7F, 0X6F};
 
 // flag for interrupts in the same press 
 volatile char flag=0;
 		
 	//Global Variables
 		unsigned long volatile J;
-		volatile short I = 0;
+		volatile unsigned char GlobalCounter= 0u;
 		
 int main(){
 	//Enable Clocks For GPIO Ports
@@ -112,19 +112,18 @@ int main(){
                 NVIC_PRI7_R = (NVIC_PRI7_R & GPIO_PORTF_PRIORITY_MASK) | (GPIO_PORTF_INTERRUPT_PRIORITY<<GPIO_PORTF_PRIORITY_BITS_POS); 
 	
 	while(1) {	
-		//Update 7-Segment
 			//GPIO_PORTB_DATA_R = CC_7Seg_Display_Lookup_Table[I];
 		
 		//Delay
 		//	for (J=0; J< DELAY_VALUE; J++);
 			
+		//Update 7-Segment
+			GPIO_PORTB_DATA_R = CC_7Seg_Display_Lookup_Table[GlobalCounter];
 		// Reset Counter
-			GPIO_PORTB_DATA_R = CC_7Seg_Display_Lookup_Table[I];
-			
-                        if(((GPIO_PORTF_DATA_R &(1<<4)) ==(1<<4)) && flag==1)
-                          flag=0;
-                         if(((GPIO_PORTF_DATA_R &(1<<0) )==(1<<0)) && flag==2)
-                          flag=0;
+        	if(((GPIO_PORTF_DATA_R &(1<<4)) ==(1<<4)) && flag==1)
+        	  flag=0;
+        	 if(((GPIO_PORTF_DATA_R &(1<<0) )==(1<<0)) && flag==2)
+        	  flag=0;
 		}
 }
 
@@ -136,8 +135,8 @@ void GPIO_PORTF_Handler()
                   I++;
 			GPIO_PORTF_ICR_R = GPIO_PORTF_ICR_R | (1<<4);
                         flag=1;
-                        if(I>8) {
-			 I = 0;
+                        if(GlobalCounter>8u) {
+			 GlobalCounter= 0u;
 			}
                       
 		}
@@ -148,12 +147,13 @@ void GPIO_PORTF_Handler()
           I--;
 		GPIO_PORTF_ICR_R = GPIO_PORTF_ICR_R | (1<<0);
                 flag=2;
-                if(I<0) {
-			 I = 8;
+                if(GlobalCounter<0u) {
+			 GlobalCounter= 8u;
 		
                         }
 	}
-        //Update 7-Segment
+        //Update 7-Segment 
+		/* Please update just once */
 			GPIO_PORTB_DATA_R = CC_7Seg_Display_Lookup_Table[I];
                         ;
 }
